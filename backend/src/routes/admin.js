@@ -40,13 +40,6 @@ router.get('/me', requireAdmin, (req, res) => {
   res.json({ username: req.admin.username });
 });
 
-router.get('/users', requireAdmin, async (req, res, next) => {
-  try {
-    const users = await store.listAllUsers();
-    const safe = users.map(({ fbToken, ...u }) => u);
-    res.json(safe);
-  } catch (e) { next(e); }
-});
 
 router.get('/config', requireAdmin, async (_req, res, next) => {
   try {
@@ -70,9 +63,20 @@ router.post('/config', requireAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.get('/stats', requireAdmin, async (req, res, next) => {
+
+router.get('/users', requireAdmin, async (_req, res, next) => {
   try {
-    const users = await store.listAllUsers();
+    const users = await store.listAllAccounts();
+    const safe = users.map(({ fbToken, passwordHash, metaAppSecret, ...u }) => ({
+      ...u, hasMeta: !!(u.metaAppId && u.metaConfigId), fbConnected: !!fbToken,
+    }));
+    res.json(safe);
+  } catch (e) { next(e); }
+});
+
+router.get('/stats', requireAdmin, async (_req, res, next) => {
+  try {
+    const users = await store.listAllAccounts();
     const totalWabas = users.reduce((s, u) => s + (u.wabaIds?.length || 0), 0);
     const totalBusinesses = users.reduce((s, u) => s + (u.businessIds?.length || 0), 0);
     res.json({ users: users.length, wabas: totalWabas, businesses: totalBusinesses });

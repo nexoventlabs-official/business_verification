@@ -12,7 +12,7 @@ const upload = multer({
 });
 
 async function userToken(uid) {
-  const u = await store.getUser(uid);
+  const u = await store.getAccount(uid);
   if (!u?.fbToken) {
     const e = new Error('facebook_not_connected');
     e.status = 401;
@@ -22,7 +22,7 @@ async function userToken(uid) {
 }
 
 async function assertBusiness(req, businessId) {
-  const u = await store.getUser(req.user.uid);
+  const u = await store.getAccount(req.user.uid);
   if (!(u?.businessIds || []).includes(businessId)) {
     const e = new Error('business_not_found_for_user');
     e.status = 403;

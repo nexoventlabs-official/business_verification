@@ -7,7 +7,7 @@ const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 async function userToken(uid) {
-  const u = await store.getUser(uid);
+  const u = await store.getAccount(uid);
   if (!u?.fbToken) {
     const e = new Error('facebook_not_connected');
     e.status = 401;
@@ -22,7 +22,7 @@ async function userToken(uid) {
  */
 router.get('/portfolio', requireAuth, async (req, res, next) => {
   try {
-    const u = await store.getUser(req.user.uid);
+    const u = await store.getAccount(req.user.uid);
     if (!u) return res.status(404).json({ error: 'user_not_found' });
     const token = await userToken(req.user.uid);
 
@@ -53,7 +53,7 @@ router.get('/portfolio', requireAuth, async (req, res, next) => {
 
 router.get('/wabas', requireAuth, async (req, res, next) => {
   try {
-    const u = await store.getUser(req.user.uid);
+    const u = await store.getAccount(req.user.uid);
     const token = await userToken(req.user.uid);
     const out = [];
     for (const wid of u.wabaIds || []) {

@@ -1,6 +1,36 @@
-const { User, Waba, Phone, Verification } = require('../models/index');
+const { Account, User, Waba, Phone, Verification } = require('../models/index');
 
 module.exports = {
+  /* ── Account (email/password + Meta creds + FB data) ── */
+  async createAccount(account) {
+    const doc = await Account.create({ ...account, _id: account.id });
+    return { ...doc.toObject(), id: doc._id };
+  },
+  async getAccountByEmail(email) {
+    const doc = await Account.findOne({ email }).lean();
+    if (!doc) return null;
+    return { ...doc, id: doc._id };
+  },
+  async getAccount(id) {
+    const doc = await Account.findById(id).lean();
+    if (!doc) return null;
+    return { ...doc, id: doc._id };
+  },
+  async updateAccount(id, patch) {
+    const doc = await Account.findOneAndUpdate(
+      { _id: id },
+      { $set: patch },
+      { new: true }
+    ).lean();
+    if (!doc) return null;
+    return { ...doc, id: doc._id };
+  },
+  async listAllAccounts() {
+    const docs = await Account.find().lean();
+    return docs.map((d) => ({ ...d, id: d._id }));
+  },
+
+  /* ── User (legacy) ── */
   async upsertUser(user) {
     return User.findOneAndUpdate(
       { _id: user.id },

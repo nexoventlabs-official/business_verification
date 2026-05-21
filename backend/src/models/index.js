@@ -1,7 +1,28 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-/* ── User ── */
+/* ── Account (email/password user — also holds their Meta App credentials + FB data) ── */
+const accountSchema = new Schema({
+  _id: String,           // uuid generated on register
+  name: String,
+  email: { type: String, unique: true, sparse: true },
+  passwordHash: String,
+  // Tenant: their own Meta App
+  metaAppId: String,
+  metaAppSecret: String,
+  metaConfigId: String,
+  graphVersion: { type: String, default: 'v23.0' },
+  // FB connection (set after Embedded Signup)
+  fbUserId: String,
+  fbToken: String,
+  tokenExpiresIn: Number,
+  wabaIds: [String],
+  businessIds: [String],
+  signupSession: Schema.Types.Mixed,
+  createdAt: Number,
+}, { _id: false });
+
+/* ── User (legacy FB-only, kept for backwards compat) ── */
 const userSchema = new Schema({
   _id: String,
   name: String,
@@ -62,10 +83,11 @@ const bspConfigSchema = new Schema({
   updatedAt: Number,
 }, { _id: false });
 
+const Account      = mongoose.models.Account      || mongoose.model('Account',      accountSchema);
 const User         = mongoose.models.User         || mongoose.model('User',         userSchema);
 const Waba         = mongoose.models.Waba         || mongoose.model('Waba',         wabaSchema);
 const Phone        = mongoose.models.Phone        || mongoose.model('Phone',        phoneSchema);
 const Verification = mongoose.models.Verification || mongoose.model('Verification', verificationSchema);
 const BspConfig    = mongoose.models.BspConfig    || mongoose.model('BspConfig',    bspConfigSchema);
 
-module.exports = { User, Waba, Phone, Verification, BspConfig };
+module.exports = { Account, User, Waba, Phone, Verification, BspConfig };
