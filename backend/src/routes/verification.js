@@ -40,7 +40,12 @@ router.get('/:businessId/status', requireAuth, async (req, res, next) => {
     await assertBusiness(req, businessId);
     const token = await userToken(req.user.uid);
 
-    const info = await meta.getBusinessInfo(token, businessId);
+    let info = { id: businessId };
+    try {
+      info = await meta.getBusinessInfo(token, businessId);
+    } catch (metaErr) {
+      console.warn('[verification/status] getBusinessInfo failed:', metaErr?.response?.data?.error?.message || metaErr.message);
+    }
     const stored = await store.getVerification(businessId) || {};
 
     res.json({ ...info, ...stored });

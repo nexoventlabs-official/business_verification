@@ -134,10 +134,11 @@ async function subscribeAppToWaba(token, wabaId) {
 /**
  * Fetch business details + current verification_status from Meta.
  * Fields: id, name, verification_status, support_email, link
+ * (primary_page removed — causes 400 with standard user tokens)
  */
 async function getBusinessInfo(token, businessId) {
   const { data } = await client(token).get(`/${businessId}`, {
-    params: { fields: 'id,name,verification_status,support_email,link,primary_page' },
+    params: { fields: 'id,name,verification_status,support_email,link' },
   });
   return data;
 }
