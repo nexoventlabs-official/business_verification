@@ -70,7 +70,9 @@ app.use('/api/tenants', (_req, res) => res.status(410).json({ error: 'tenant_set
 
 app.use((err, _req, res, _next) => {
   const metaError = err.response?.data;
-  console.error('[error]', err.message, metaError || '');
+  const metaCode  = metaError?.error?.code;
+  const metaMsg   = metaError?.error?.message;
+  console.error('[error]', err.message, metaCode ? `Meta code=${metaCode}: ${metaMsg}` : '', metaError ? JSON.stringify(metaError) : '');
   res.status(err.response?.status || err.status || 500).json({
     error: err.message || 'Internal Server Error',
     meta: metaError || undefined,

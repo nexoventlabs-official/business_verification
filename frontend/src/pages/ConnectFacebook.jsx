@@ -35,10 +35,12 @@ export default function ConnectFacebook({ onAuthed }) {
       onAuthed?.(data.user);
       nav('/portfolio');
     } catch (e) {
-      const metaMsg = e?.response?.data?.meta?.error?.message;
-      const topMsg  = e?.response?.data?.error || e.message;
-      setError(metaMsg || topMsg);
-      console.error('[exchange error]', e?.response?.data || e.message);
+      const d = e?.response?.data;
+      const metaErr = d?.meta?.error || d?.meta;
+      const msg = metaErr?.message || d?.error || e.message;
+      const detail = metaErr ? ` (code ${metaErr.code}: ${metaErr.type})` : '';
+      setError(msg + detail);
+      console.error('[exchange full error]', JSON.stringify(d, null, 2));
     } finally { setBusy(false); }
   }
 
