@@ -7,6 +7,8 @@ const { sign, requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+const BACKEND_URL = process.env.BACKEND_URL || 'https://business-verification.onrender.com';
+
 function setCookie(res, token) {
   const isProd = process.env.NODE_ENV === 'production';
   res.cookie('bsp_token', token, {
@@ -107,7 +109,7 @@ router.get('/facebook/start', requireAuth, async (req, res, next) => {
     }
     const jwt = require('jsonwebtoken');
     const state = jwt.sign({ uid: req.user.uid }, process.env.JWT_SECRET, { expiresIn: '15m' });
-    const redirectUri = `${process.env.BACKEND_URL}/api/auth/facebook/callback`;
+    const redirectUri = `${BACKEND_URL}/api/auth/facebook/callback`;
     const scope = 'whatsapp_business_management,whatsapp_business_messaging,business_management,ads_management';
     const authUrl = `https://www.facebook.com/dialog/oauth?` +
       `client_id=${account.metaAppId}` +
@@ -140,7 +142,7 @@ router.get('/facebook/callback', async (req, res) => {
     const account = await store.getAccount(uid);
     if (!account) return closePopup({ type: 'fb_error', error: 'account_not_found' });
 
-    const redirectUri = `${process.env.BACKEND_URL}/api/auth/facebook/callback`;
+    const redirectUri = `${BACKEND_URL}/api/auth/facebook/callback`;
     const creds = { appId: account.metaAppId, appSecret: account.metaAppSecret, redirectUri };
 
     const shortLived = await meta.exchangeCodeForToken({ code, ...creds });
