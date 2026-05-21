@@ -38,12 +38,9 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.get('/api/debug-config', (_req, res) => res.json({
   NODE_ENV: process.env.NODE_ENV,
   FRONTEND_URL: process.env.FRONTEND_URL,
-  META_APP_ID: process.env.META_APP_ID ? '✓ set' : '✗ missing',
-  META_APP_SECRET: process.env.META_APP_SECRET ? '✓ set' : '✗ missing',
-  META_CONFIG_ID: process.env.META_CONFIG_ID ? '✓ set' : '✗ missing',
-  META_REDIRECT_URI: process.env.META_REDIRECT_URI || '✗ missing',
   MONGODB_URI: process.env.MONGODB_URI ? '✓ set' : '✗ missing',
   JWT_SECRET: process.env.JWT_SECRET ? '✓ set' : '✗ missing',
+  note: 'Meta credentials are stored in MongoDB — configure via /admin panel',
 }));
 
 app.use('/api/auth', authRouter);

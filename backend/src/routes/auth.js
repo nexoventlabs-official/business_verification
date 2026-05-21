@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuid } = require('uuid');
 const meta = require('../services/metaApi');
 const store = require('../db/store');
+const { BspConfig } = require('../models/index');
 const { sign, requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -10,16 +11,18 @@ const router = express.Router();
  * Public config — safe to expose (no secret).
  * The frontend uses appId + configId to initialise the FB SDK and launch Embedded Signup.
  */
-router.get('/config', (_req, res) => {
-  const { META_APP_ID, META_CONFIG_ID, META_GRAPH_VERSION } = process.env;
-  if (!META_APP_ID || !META_CONFIG_ID) {
-    return res.status(500).json({ error: 'BSP Meta credentials not configured in .env' });
-  }
-  res.json({
-    appId: META_APP_ID,
-    configId: META_CONFIG_ID,
-    graphVersion: META_GRAPH_VERSION || 'v23.0',
-  });
+router.get('/config', async (_req, res, next) => {
+  try {
+    const cfg = await BspConfig.findById('bsp').lean();
+    if (!cfg?.metaAppId || !cfg?.metaConfigId) {
+      return res.status(503).json({ error: 'not_configured', message: 'BSP Meta credentials not set. Login to admin panel to configure.' });
+    }
+    res.json({
+      appId: cfg.metaAppId,
+      configId: cfg.metaConfigId,
+      graphVersion: cfg.graphVersion || 'v23.0',
+    });
+  } catch (e) { next(e); }
 });
 
 /**
@@ -31,15 +34,15 @@ router.post('/facebook/exchange', async (req, res, next) => {
     const { code, signupSession, redirectUri } = req.body;
     if (!code) return res.status(400).json({ error: 'missing_code' });
 
-    const creds = {
-      appId: process.env.META_APP_ID,
-      appSecret: process.env.META_APP_SECRET,
-      redirectUri: redirectUri || process.env.META_REDIRECT_URI,
-    };
-    const missing = ['appId','appSecret'].filter((k) => !creds[k]);
-    if (missing.length) {
-      return res.status(500).json({ error: `Missing env vars: ${missing.map(k => ({ appId:'META_APP_ID', appSecret:'META_APP_SECRET' })[k]).join(', ')}` });
+    const cfg = await BspConfig.findById('bsp').lean();
+    if (!cfg?.metaAppId || !cfg?.metaAppSecret) {
+      return res.status(503).json({ error: 'not_configured', message: 'BSP Meta credentials not set. Configure via admin panel.' });
     }
+    const creds = {
+      appId: cfg.metaAppId,
+      appSecret: cfg.metaAppSecret,
+      redirectUri: redirectUri || '',
+    };
     if (!creds.redirectUri) {
       return res.status(400).json({ error: 'redirectUri is required' });
     }

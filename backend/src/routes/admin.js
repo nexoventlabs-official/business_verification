@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const store = require('../db/store');
+const { BspConfig } = require('../models/index');
 
 const router = express.Router();
 
@@ -44,6 +45,28 @@ router.get('/users', requireAdmin, async (req, res, next) => {
     const users = await store.listAllUsers();
     const safe = users.map(({ fbToken, ...u }) => u);
     res.json(safe);
+  } catch (e) { next(e); }
+});
+
+router.get('/config', requireAdmin, async (_req, res, next) => {
+  try {
+    const cfg = await BspConfig.findById('bsp').lean();
+    res.json(cfg || {});
+  } catch (e) { next(e); }
+});
+
+router.post('/config', requireAdmin, async (req, res, next) => {
+  try {
+    const { metaAppId, metaAppSecret, metaConfigId, graphVersion } = req.body;
+    if (!metaAppId || !metaAppSecret || !metaConfigId) {
+      return res.status(400).json({ error: 'metaAppId, metaAppSecret and metaConfigId are required' });
+    }
+    const cfg = await BspConfig.findOneAndUpdate(
+      { _id: 'bsp' },
+      { $set: { _id: 'bsp', metaAppId, metaAppSecret, metaConfigId, graphVersion: graphVersion || 'v23.0', updatedAt: Date.now() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).lean();
+    res.json({ ok: true, appId: cfg.metaAppId, configId: cfg.metaConfigId });
   } catch (e) { next(e); }
 });
 

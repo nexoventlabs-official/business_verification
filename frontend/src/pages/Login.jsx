@@ -17,7 +17,10 @@ export default function Login({ onAuthed }) {
         setConfig(r.data);
         loadFbSdk(r.data.appId, r.data.graphVersion);
       })
-      .catch((e) => setError(e?.response?.data?.error || e.message));
+      .catch((e) => {
+        const msg = e?.response?.data?.message || e?.response?.data?.error || e.message;
+        setError(e?.response?.status === 503 ? 'BSP not configured yet. Admin must set Meta credentials at /admin.' : msg);
+      });
   }, []);
 
   async function handleConnect() {

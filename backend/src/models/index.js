@@ -52,9 +52,20 @@ const verificationSchema = new Schema({
   updatedAt: Number,
 }, { _id: false });
 
+/* ── BspConfig (singleton — _id is always 'bsp') ── */
+const bspConfigSchema = new Schema({
+  _id: { type: String, default: 'bsp' },
+  metaAppId: String,
+  metaAppSecret: String,
+  metaConfigId: String,
+  graphVersion: { type: String, default: 'v23.0' },
+  updatedAt: Number,
+}, { _id: false });
+
 const User         = mongoose.models.User         || mongoose.model('User',         userSchema);
 const Waba         = mongoose.models.Waba         || mongoose.model('Waba',         wabaSchema);
 const Phone        = mongoose.models.Phone        || mongoose.model('Phone',        phoneSchema);
 const Verification = mongoose.models.Verification || mongoose.model('Verification', verificationSchema);
+const BspConfig    = mongoose.models.BspConfig    || mongoose.model('BspConfig',    bspConfigSchema);
 
-module.exports = { User, Waba, Phone, Verification };
+module.exports = { User, Waba, Phone, Verification, BspConfig };
