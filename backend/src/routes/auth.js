@@ -97,7 +97,12 @@ router.post('/facebook/exchange', async (req, res, next) => {
     }
 
     const jwtToken = sign({ uid: userId });
-    res.cookie('bsp_token', jwtToken, { httpOnly: true, sameSite: 'lax' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('bsp_token', jwtToken, {
+      httpOnly: true,
+      sameSite: isProd ? 'none' : 'lax',
+      secure: isProd,
+    });
 
     res.json({
       user: { id: userId, name: me.name, email: me.email },

@@ -15,10 +15,14 @@ const { router: adminRouter } = require('./src/routes/admin');
 const app = express();
 
 app.use(morgan('dev'));
+const isProd = process.env.NODE_ENV === 'production';
 app.use(cors({
   origin: process.env.FRONTEND_URL,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
 }));
+app.options('*', cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(
@@ -26,7 +30,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev-secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' },
+    cookie: { httpOnly: true, sameSite: isProd ? 'none' : 'lax', secure: isProd },
   })
 );
 

@@ -25,7 +25,8 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ error: 'invalid_credentials' });
   }
   const token = jwt.sign({ isAdmin: true, username }, process.env.JWT_SECRET, { expiresIn: '12h' });
-  res.cookie('bsp_admin', token, { httpOnly: true, sameSite: 'lax' });
+  const isProd = process.env.NODE_ENV === 'production';
+  res.cookie('bsp_admin', token, { httpOnly: true, sameSite: isProd ? 'none' : 'lax', secure: isProd });
   res.json({ ok: true });
 });
 
