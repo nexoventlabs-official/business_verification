@@ -28,17 +28,20 @@ router.get('/config', (_req, res) => {
  */
 router.post('/facebook/exchange', async (req, res, next) => {
   try {
-    const { code, signupSession } = req.body;
+    const { code, signupSession, redirectUri } = req.body;
     if (!code) return res.status(400).json({ error: 'missing_code' });
 
     const creds = {
       appId: process.env.META_APP_ID,
       appSecret: process.env.META_APP_SECRET,
-      redirectUri: process.env.META_REDIRECT_URI,
+      redirectUri: redirectUri || process.env.META_REDIRECT_URI,
     };
-    const missing = ['appId','appSecret','redirectUri'].filter((k) => !creds[k]);
+    const missing = ['appId','appSecret'].filter((k) => !creds[k]);
     if (missing.length) {
-      return res.status(500).json({ error: `Missing env vars: ${missing.map(k => ({ appId:'META_APP_ID', appSecret:'META_APP_SECRET', redirectUri:'META_REDIRECT_URI' })[k]).join(', ')}` });
+      return res.status(500).json({ error: `Missing env vars: ${missing.map(k => ({ appId:'META_APP_ID', appSecret:'META_APP_SECRET' })[k]).join(', ')}` });
+    }
+    if (!creds.redirectUri) {
+      return res.status(400).json({ error: 'redirectUri is required' });
     }
 
     const shortLived = await meta.exchangeCodeForToken({ code, ...creds });

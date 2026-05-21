@@ -25,7 +25,11 @@ export default function Login({ onAuthed }) {
     try {
       await loadFbSdk(config.appId, config.graphVersion);
       const { code } = await launchEmbeddedSignup(config.configId, (sess) => setSignupSession(sess));
-      const { data } = await api.post('/api/auth/facebook/exchange', { code, signupSession });
+      const { data } = await api.post('/api/auth/facebook/exchange', {
+        code,
+        signupSession,
+        redirectUri: window.location.origin,
+      });
       onAuthed(data.user);
       nav('/portfolio');
     } catch (e) {
