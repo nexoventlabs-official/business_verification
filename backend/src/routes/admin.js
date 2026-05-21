@@ -74,6 +74,39 @@ router.get('/users', requireAdmin, async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/user/:email/debug', requireAdmin, async (req, res, next) => {
+  try {
+    const meta = require('../services/metaApi');
+    const account = await store.getAccountByEmail(req.params.email.toLowerCase());
+    if (!account) return res.status(404).json({ error: 'user_not_found' });
+
+    const { passwordHash, metaAppSecret, ...safe } = account;
+    const result = { account: { ...safe, hasMeta: !!(account.metaAppId && account.metaConfigId), fbConnected: !!account.fbToken }, businesses: [], wabas: [] };
+
+    if (account.fbToken) {
+      for (const bid of account.businessIds || []) {
+        try {
+          const info = await meta.getBusinessInfo(account.fbToken, bid);
+          const owned = await meta.listOwnedWabas(account.fbToken, bid);
+          const shared = await meta.listSharedWabas(account.fbToken, bid);
+          result.businesses.push({ ...info, owned_wabas: owned, shared_wabas: shared });
+        } catch (e) {
+          result.businesses.push({ id: bid, error: e?.response?.data?.error?.message || e.message });
+        }
+      }
+      for (const wid of account.wabaIds || []) {
+        try {
+          const phones = await meta.listPhoneNumbers(account.fbToken, wid);
+          result.wabas.push({ id: wid, phones });
+        } catch (e) {
+          result.wabas.push({ id: wid, error: e?.response?.data?.error?.message || e.message });
+        }
+      }
+    }
+    res.json(result);
+  } catch (e) { next(e); }
+});
+
 router.get('/stats', requireAdmin, async (_req, res, next) => {
   try {
     const users = await store.listAllAccounts();
