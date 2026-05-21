@@ -5,7 +5,6 @@ import Dashboard from './pages/Dashboard.jsx';
 import PhoneSetup from './pages/PhoneSetup.jsx';
 import PendingReview from './pages/PendingReview.jsx';
 import Portfolio from './pages/Portfolio.jsx';
-import TenantSetup from './pages/TenantSetup.jsx';
 import BusinessVerification from './pages/BusinessVerification.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
@@ -28,7 +27,6 @@ export default function App() {
     <div className="min-h-full">
       <Header user={user} onLogout={() => setUser(null)} />
       <Routes>
-        <Route path="/setup" element={<TenantSetup />} />
         <Route path="/" element={user ? <Navigate to="/portfolio" /> : <Login onAuthed={setUser} />} />
         <Route path="/portfolio" element={user ? <Portfolio /> : <Navigate to="/" />} />
         <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />

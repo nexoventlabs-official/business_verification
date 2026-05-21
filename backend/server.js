@@ -37,6 +37,7 @@ app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/webhook', webhookRouter);
 app.use('/api/verification', verificationRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/tenants', (_req, res) => res.status(410).json({ error: 'tenant_setup_removed' }));
 
 app.use((err, _req, res, _next) => {
   console.error('[error]', err);
