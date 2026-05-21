@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MessageSquare, Phone, CheckCircle2, Clock, ShieldCheck, ChevronRight, RefreshCw, AlertCircle, Plus, UserPlus, Loader2, X, Smartphone } from 'lucide-react';
+import { Building2, MessageSquare, Phone, CheckCircle2, Clock, ShieldCheck, ChevronRight, RefreshCw, AlertCircle, Plus, UserPlus, Loader2 } from 'lucide-react';
 import { api } from '../api.js';
 
 const BACKEND = import.meta.env.VITE_API_BASE || 'https://business-verification.onrender.com';
@@ -12,7 +12,6 @@ export default function Portfolio() {
   const [error, setError] = useState('');
   const [addBusy, setAddBusy] = useState(false);
   const [addMsg, setAddMsg] = useState('');
-  const [successData, setSuccessData] = useState(null);
   const popupRef = useRef(null);
 
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function Portfolio() {
       if (!e.origin.includes('business-verification.onrender.com')) return;
       if (e.data?.type === 'fb_connected') {
         setAddBusy(false);
-        setSuccessData(e.data);
         load();
       } else if (e.data?.type === 'fb_error') {
         setAddBusy(false);
@@ -89,7 +87,6 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {successData && <SuccessModal data={successData} onClose={() => setSuccessData(null)} />}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -283,82 +280,3 @@ function NameStatusBadge({ status, phoneStatus }) {
   return <span className="text-xs bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">{status.replace(/_/g, ' ').toLowerCase()}</span>;
 }
 
-function SuccessModal({ data, onClose }) {
-  const phones = data.phones || [];
-  const wabaCount = (data.wabaIds || []).length;
-  const bizCount  = (data.businessIds || []).length;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-5 text-white relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white">
-            <X size={20} />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 rounded-full p-2"><CheckCircle2 size={22} /></div>
-            <div>
-              <h2 className="text-lg font-bold">WhatsApp Account Connected!</h2>
-              <p className="text-green-100 text-sm mt-0.5">
-                {bizCount} business · {wabaCount} WABA · {phones.length} phone number{phones.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Phone list */}
-        <div className="px-6 py-4">
-          {phones.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-4">
-              Account connected. Phone numbers will appear in your portfolio shortly.
-            </p>
-          )}
-          {phones.map((p) => {
-            const ns = (p.name_status || '').toUpperCase();
-            const ps = (p.status || '').toUpperCase();
-            const isActive = ns === 'AVAILABLE_WITHOUT_REVIEW' || ns === 'APPROVED' || ps === 'CONNECTED';
-            const isReview = !isActive && (ns === 'PENDING_REVIEW' || (ns.includes('REVIEW') && !ns.includes('WITHOUT')));
-            return (
-              <div key={p.id} className="flex items-center gap-4 border border-slate-200 rounded-xl p-4 mb-3 bg-slate-50">
-                <div className="bg-green-100 rounded-full p-2.5 shrink-0">
-                  <Smartphone size={18} className="text-green-700" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-slate-800 text-sm truncate">
-                    {p.verified_name || 'Display name pending'}
-                  </div>
-                  <div className="text-xs text-slate-500 font-mono mt-0.5">
-                    {p.display_phone_number || p.id}
-                  </div>
-                </div>
-                <div>
-                  {isActive
-                    ? <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium whitespace-nowrap"><CheckCircle2 size={10} /> Active</span>
-                    : isReview
-                    ? <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium whitespace-nowrap"><Clock size={10} /> In Review</span>
-                    : <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">{(p.name_status || 'pending').replace(/_/g,' ').toLowerCase()}</span>
-                  }
-                </div>
-              </div>
-            );
-          })}
-
-          {phones.some((p) => (p.name_status || '').toUpperCase().includes('PENDING') || (p.name_status || '').toUpperCase().includes('REVIEW')) && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex gap-2 mt-1">
-              <Clock size={14} className="shrink-0 mt-0.5 text-amber-600" />
-              <span><b>Display name under review.</b> Meta will review within 1 business day. During review, you can send 5 test messages every 24 hours. You'll receive an email once approved.</span>
-            </div>
-          )}
-        </div>
-
-        <div className="px-6 pb-5">
-          <button onClick={onClose}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors">
-            Go to Portfolio
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
