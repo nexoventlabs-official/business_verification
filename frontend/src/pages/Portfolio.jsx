@@ -89,10 +89,7 @@ export default function Portfolio() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500">{(b.owned_wabas?.length || 0) + (b.shared_wabas?.length || 0)} WABA(s)</span>
-                <button onClick={() => nav(`/verification/${b.id}`)}
-                  className="inline-flex items-center gap-1 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg">
-                  <ShieldCheck size={12} /> Verify <ChevronRight size={11} />
-                </button>
+                <BusinessVerifyBadge status={b.verification_status} onClick={() => nav(`/verification/${b.id}`)} />
               </div>
             </div>
           ))}
@@ -196,6 +193,30 @@ function StatusBadge({ label, prefix }) {
     : v.includes('REJECT') || v.includes('FAIL') ? 'bg-red-50 text-red-700 border-red-200'
     : 'bg-slate-50 text-slate-600 border-slate-200';
   return <span className={`text-xs px-2 py-0.5 rounded-full border ${color}`}>{prefix}: {label.toLowerCase().replace(/_/g, ' ')}</span>;
+}
+
+function BusinessVerifyBadge({ status, onClick }) {
+  const v = String(status || '').toUpperCase();
+  if (v === 'VERIFIED') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-lg">
+        <CheckCircle2 size={12} /> Verified
+      </span>
+    );
+  }
+  if (v === 'PENDING' || v === 'SUBMITTED') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1.5 rounded-lg">
+        <Clock size={12} /> Under Review
+      </span>
+    );
+  }
+  return (
+    <button onClick={onClick}
+      className="inline-flex items-center gap-1 text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg">
+      <ShieldCheck size={12} /> Verify <ChevronRight size={11} />
+    </button>
+  );
 }
 
 function NameStatusBadge({ status }) {

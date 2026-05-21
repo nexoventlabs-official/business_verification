@@ -29,17 +29,34 @@ router.get('/portfolio', requireAuth, async (req, res, next) => {
     const businesses = [];
     for (const bid of u.businessIds || []) {
       try {
-        const owned = await meta.listOwnedWabas(token, bid);
-        const shared = await meta.listSharedWabas(token, bid);
-        businesses.push({ id: bid, owned_wabas: owned, shared_wabas: shared });
+        const [info, owned, shared] = await Promise.allSettled([
+          meta.getBusinessInfo(token, bid),
+          meta.listOwnedWabas(token, bid),
+          meta.listSharedWabas(token, bid),
+        ]);
+        businesses.push({
+          id: bid,
+          name: info.value?.name,
+          verification_status: info.value?.verification_status,
+          owned_wabas: owned.value || [],
+          shared_wabas: shared.value || [],
+        });
       } catch (_) {}
     }
 
+    const allWabaInfo = businesses.flatMap((b) => [...(b.owned_wabas || []), ...(b.shared_wabas || [])]);
     const wabas = [];
     for (const wid of u.wabaIds || []) {
       try {
         const phones = await meta.listPhoneNumbers(token, wid);
-        wabas.push({ id: wid, phones });
+        const wabaInfo = allWabaInfo.find((w) => w.id === wid);
+        wabas.push({
+          id: wid,
+          name: wabaInfo?.name,
+          account_review_status: wabaInfo?.account_review_status,
+          business_verification_status: wabaInfo?.business_verification_status,
+          phones,
+        });
       } catch (_) {}
     }
 
