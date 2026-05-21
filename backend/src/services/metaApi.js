@@ -149,8 +149,13 @@ async function getBusinessInfo(token, businessId) {
  * Returns { id: <docSetId> }
  */
 async function createVerificationDocumentSet(token, businessId, setType) {
-  const { data } = await client(token).post(`/${businessId}/verification_document_sets`, {
-    type: setType,
+  const params = new URLSearchParams({ type: setType });
+  const { data } = await axios.post(`${BASE}/${businessId}/verification_document_sets`, params.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    timeout: 30000,
   });
   return data;
 }

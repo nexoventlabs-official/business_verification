@@ -91,7 +91,7 @@ router.post(
       await meta.uploadVerificationDocument(
         token,
         msmeSet.id,
-        'MSME_CERTIFICATE',
+        'BUSINESS_REGISTRATION',
         msmeFile.buffer,
         msmeFile.originalname,
         msmeFile.mimetype
@@ -120,7 +120,10 @@ router.post(
       });
 
       res.json({ ok: true, msmeSetId: msmeSet.id, bankSetId: bankSet.id });
-    } catch (e) { next(e); }
+    } catch (e) {
+      console.error('[verification/documents] Meta error:', e?.response?.data?.error || e.message);
+      next(e);
+    }
   }
 );
 
