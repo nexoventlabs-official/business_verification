@@ -138,7 +138,8 @@ export default function Portfolio() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500">{(b.owned_wabas?.length || 0) + (b.shared_wabas?.length || 0)} WABA(s)</span>
-                <BusinessVerifyBadge status={b.verification_status} onClick={() => nav(`/verification/${b.id}`)} />
+                <BusinessVerifyBadge status={b.verification_status}
+                  onClick={() => window.open(`https://business.facebook.com/settings/info?business_id=${b.id}`, '_blank')} />
               </div>
             </div>
           ))}
