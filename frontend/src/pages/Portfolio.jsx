@@ -196,11 +196,7 @@ export default function Portfolio() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <NameStatusBadge status={p.name_status} />
-                <button onClick={() => nav(`/review/${p.id}`)}
-                  className="text-xs text-slate-500 hover:text-slate-800 border border-slate-200 px-2 py-1 rounded-lg">
-                  Details
-                </button>
+                <NameStatusBadge status={p.name_status} phoneStatus={p.status} />
               </div>
             </div>
           ))}
@@ -271,13 +267,19 @@ function BusinessVerifyBadge({ status, onClick }) {
   );
 }
 
-function NameStatusBadge({ status }) {
-  if (!status) return <span className="text-xs text-slate-400">—</span>;
-  const v = status.toUpperCase();
-  if (v.includes('PENDING') || v.includes('REVIEW'))
+function NameStatusBadge({ status, phoneStatus }) {
+  const v = (status || '').toUpperCase();
+  const ps = (phoneStatus || '').toUpperCase();
+  // Active: connected + name visible
+  if (v === 'AVAILABLE_WITHOUT_REVIEW' || v === 'APPROVED' || ps === 'CONNECTED')
+    return <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full"><CheckCircle2 size={11} /> Active</span>;
+  // In Review
+  if (v === 'PENDING_REVIEW' || v.includes('PENDING') || (v.includes('REVIEW') && !v.includes('WITHOUT')))
     return <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full"><Clock size={11} /> In Review</span>;
-  if (v.includes('APPROVED') || v.includes('AVAILABLE_WITH'))
-    return <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full"><CheckCircle2 size={11} /> Approved</span>;
+  // Rejected
+  if (v === 'DECLINED' || v.includes('REJECT'))
+    return <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full"><AlertCircle size={11} /> Rejected</span>;
+  if (!status) return <span className="text-xs text-slate-400">—</span>;
   return <span className="text-xs bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">{status.replace(/_/g, ' ').toLowerCase()}</span>;
 }
 
@@ -313,8 +315,10 @@ function SuccessModal({ data, onClose }) {
             </p>
           )}
           {phones.map((p) => {
-            const inReview = (p.name_status || '').toUpperCase().includes('PENDING') ||
-                             (p.name_status || '').toUpperCase().includes('REVIEW');
+            const ns = (p.name_status || '').toUpperCase();
+            const ps = (p.status || '').toUpperCase();
+            const isActive = ns === 'AVAILABLE_WITHOUT_REVIEW' || ns === 'APPROVED' || ps === 'CONNECTED';
+            const isReview = !isActive && (ns === 'PENDING_REVIEW' || (ns.includes('REVIEW') && !ns.includes('WITHOUT')));
             return (
               <div key={p.id} className="flex items-center gap-4 border border-slate-200 rounded-xl p-4 mb-3 bg-slate-50">
                 <div className="bg-green-100 rounded-full p-2.5 shrink-0">
@@ -329,13 +333,11 @@ function SuccessModal({ data, onClose }) {
                   </div>
                 </div>
                 <div>
-                  {inReview
-                    ? <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
-                        <Clock size={10} /> In Review
-                      </span>
-                    : <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
-                        <CheckCircle2 size={10} /> Active
-                      </span>
+                  {isActive
+                    ? <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium whitespace-nowrap"><CheckCircle2 size={10} /> Active</span>
+                    : isReview
+                    ? <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium whitespace-nowrap"><Clock size={10} /> In Review</span>
+                    : <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">{(p.name_status || 'pending').replace(/_/g,' ').toLowerCase()}</span>
                   }
                 </div>
               </div>
