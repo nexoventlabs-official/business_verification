@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MessageSquare, Phone, CheckCircle2, Clock, ShieldCheck, ChevronRight, RefreshCw, AlertCircle, Plus } from 'lucide-react';
+import { Building2, MessageSquare, Phone, CheckCircle2, Clock, ShieldCheck, ChevronRight, RefreshCw, AlertCircle, Plus, UserPlus, Loader2 } from 'lucide-react';
 import { api } from '../api.js';
+
+const BACKEND = import.meta.env.VITE_API_BASE || 'https://business-verification.onrender.com';
 
 export default function Portfolio() {
   const nav = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [addBusy, setAddBusy] = useState(false);
+  const [addMsg, setAddMsg] = useState('');
+  const popupRef = useRef(null);
 
   useEffect(() => {
     api.get('/api/whatsapp/portfolio')
@@ -22,6 +27,40 @@ export default function Portfolio() {
       .then((r) => setData(r.data))
       .catch((e) => setError(e?.response?.data?.error || e.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    function onMsg(e) {
+      if (!e.origin.includes('business-verification.onrender.com')) return;
+      if (e.data?.type === 'fb_connected') {
+        setAddBusy(false);
+        setAddMsg('New account connected! Refreshing…');
+        setTimeout(() => { setAddMsg(''); load(); }, 1500);
+      } else if (e.data?.type === 'fb_error') {
+        setAddBusy(false);
+        setAddMsg(`Error: ${e.data.error}`);
+      }
+    }
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  async function handleAddAccount() {
+    setAddBusy(true); setAddMsg('');
+    try {
+      const { data: d } = await api.get('/api/auth/facebook/start');
+      const w = 620, h = 700;
+      const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
+      const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+      const popup = window.open(d.authUrl, 'fb_add_account',
+        `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+      if (!popup) { setAddBusy(false); setAddMsg('Popup blocked — please allow popups and try again.'); return; }
+      popupRef.current = popup;
+      const t = setInterval(() => { if (popup.closed) { clearInterval(t); setAddBusy(false); } }, 500);
+    } catch (e) {
+      setAddBusy(false);
+      setAddMsg(e?.response?.data?.message || e.message);
+    }
   }
 
   if (loading) return (
@@ -56,15 +95,25 @@ export default function Portfolio() {
             <h1 className="text-2xl font-bold text-slate-800">Business Portfolio</h1>
             <p className="text-slate-500 text-sm mt-1">Welcome back, <b>{data.user?.name}</b> — here are your connected assets</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 flex-wrap justify-end">
             <button onClick={load} className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 bg-white px-3 py-2 rounded-lg">
               <RefreshCw size={14} /> Refresh
+            </button>
+            <button onClick={handleAddAccount} disabled={addBusy}
+              className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg">
+              {addBusy ? <><Loader2 size={14} className="animate-spin" /> Opening…</> : <><UserPlus size={15} /> Add Business Account</>}
             </button>
             <button onClick={() => nav('/phone-setup')} className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
               <Plus size={15} /> Add Phone Number
             </button>
           </div>
         </div>
+
+        {addMsg && (
+          <div className={`mb-4 text-sm px-4 py-3 rounded-xl border ${addMsg.startsWith('Error') ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+            {addMsg}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-4 mb-8">
