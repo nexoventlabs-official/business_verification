@@ -130,7 +130,6 @@ router.get('/facebook/start', requireAuth, async (req, res, next) => {
       `&response_type=code` +
       `&override_default_response_type=true` +
       `&display=popup` +
-      `&auth_type=rerequest` +
       `&extras=${extras}` +
       `&state=${encodeURIComponent(state)}`;
     res.json({ authUrl });
