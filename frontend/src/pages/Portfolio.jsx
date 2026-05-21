@@ -47,6 +47,8 @@ export default function Portfolio() {
   async function handleAddAccount() {
     setAddBusy(true); setAddMsg('');
     try {
+      // Revoke existing FB connection so Meta shows fresh Embedded Signup (not Reconnect dialog)
+      try { await api.delete('/api/auth/facebook/disconnect'); } catch (_) {}
       const { data: d } = await api.get('/api/auth/facebook/start');
       const w = 620, h = 700;
       const left = Math.round(window.screenX + (window.outerWidth - w) / 2);

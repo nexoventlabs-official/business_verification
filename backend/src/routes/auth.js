@@ -100,6 +100,18 @@ router.get('/config', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/* ── Facebook — Disconnect: revoke permissions so next signup is always fresh ── */
+router.delete('/facebook/disconnect', requireAuth, async (req, res, next) => {
+  try {
+    const u = await store.getAccount(req.user.uid);
+    if (u?.fbToken && u?.fbUserId) {
+      try { await meta.revokeAppPermissions(u.fbToken, u.fbUserId); } catch (_) {}
+    }
+    await store.updateAccount(req.user.uid, { fbToken: null, fbUserId: null });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 /* ── Facebook OAuth — Step 1: generate auth URL (popup opens this) ── */
 router.get('/facebook/start', requireAuth, async (req, res, next) => {
   try {

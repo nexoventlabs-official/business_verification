@@ -208,7 +208,13 @@ async function submitBusinessVerification(token, businessId) {
   return data;
 }
 
+async function revokeAppPermissions(token, userId) {
+  const { data } = await client(token).delete(`/${userId}/permissions`);
+  return data;
+}
+
 module.exports = {
+  revokeAppPermissions,
   exchangeCodeForToken,
   exchangeForLongLived,
   debugToken,
