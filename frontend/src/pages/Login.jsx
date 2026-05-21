@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, Eye, EyeOff } from 'lucide-react';
 import { api, markLoggedIn } from '../api.js';
 
 export default function Login({ onAuthed }) {
   const nav = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,38 +27,53 @@ export default function Login({ onAuthed }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 w-full max-w-md">
-        <div className="flex items-center gap-2 mb-2">
-          <MessageSquare className="text-emerald-500" size={22} />
-          <h1 className="text-xl font-semibold text-slate-800">Sign in</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
+            <MessageSquare className="text-white" size={20} />
+          </div>
+          <span className="text-white text-xl font-bold">BSP Console</span>
         </div>
-        <p className="text-sm text-slate-500 mb-7">Welcome back. Enter your credentials to continue.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input type="email" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required autoFocus />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <input type="password" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
-          </div>
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h1 className="text-xl font-bold text-slate-800 mb-1">Welcome back</h1>
+          <p className="text-sm text-slate-500 mb-6">Sign in to your BSP account</p>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+              <input type="email" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent bg-slate-50"
+                value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" required autoFocus />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <div className="relative">
+                <input type={showPw ? 'text' : 'password'} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent bg-slate-50 pr-10"
+                  value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+                <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
 
-          <button type="submit" disabled={busy}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 text-sm">
-            {busy ? <><Loader2 size={15} className="animate-spin" /> Signing in…</> : 'Sign In'}
-          </button>
-        </form>
+            {error && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2.5">
+                <span className="shrink-0">⚠</span> {error}
+              </div>
+            )}
 
-        <p className="mt-5 text-center text-sm text-slate-500">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-indigo-600 hover:underline font-medium">Register</Link>
-        </p>
+            <button type="submit" disabled={busy}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
+              {busy ? <><Loader2 size={15} className="animate-spin" /> Signing in…</> : 'Sign In →'}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-slate-500">
+            New to BSP Console?{' '}
+            <Link to="/register" className="text-green-600 hover:underline font-semibold">Create an account</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

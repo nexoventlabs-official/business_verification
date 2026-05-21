@@ -98,17 +98,50 @@ router.get('/config', requireAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-/* ── Facebook Embedded Signup code exchange ── */
-router.post('/facebook/exchange', requireAuth, async (req, res, next) => {
+/* ── Facebook OAuth — Step 1: generate auth URL (popup opens this) ── */
+router.get('/facebook/start', requireAuth, async (req, res, next) => {
   try {
-    const { code, signupSession, redirectUri } = req.body;
-    if (!code) return res.status(400).json({ error: 'missing_code' });
-
     const account = await store.getAccount(req.user.uid);
-    if (!account?.metaAppId || !account?.metaAppSecret) {
+    if (!account?.metaAppId || !account?.metaConfigId) {
       return res.status(503).json({ error: 'not_configured', message: 'Complete tenant setup first.' });
     }
-    const creds = { appId: account.metaAppId, appSecret: account.metaAppSecret, redirectUri: redirectUri ?? '' };
+    const jwt = require('jsonwebtoken');
+    const state = jwt.sign({ uid: req.user.uid }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const redirectUri = `${process.env.BACKEND_URL}/api/auth/facebook/callback`;
+    const scope = 'whatsapp_business_management,whatsapp_business_messaging,business_management,ads_management';
+    const authUrl = `https://www.facebook.com/dialog/oauth?` +
+      `client_id=${account.metaAppId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&config_id=${account.metaConfigId}` +
+      `&response_type=code` +
+      `&scope=${scope}` +
+      `&state=${encodeURIComponent(state)}`;
+    res.json({ authUrl });
+  } catch (e) { next(e); }
+});
+
+/* ── Facebook OAuth — Step 2: callback (popup lands here, exchanges code) ── */
+router.get('/facebook/callback', async (req, res) => {
+  const FRONTEND = process.env.FRONTEND_URL || 'https://business-verification.vercel.app';
+  function closePopup(payload) {
+    return res.send(`<!DOCTYPE html><html><body><script>
+      window.opener && window.opener.postMessage(${JSON.stringify(payload)}, "${FRONTEND}");
+      window.close();
+    </script></body></html>`);
+  }
+
+  const { code, state, error: fbError } = req.query;
+  if (fbError) return closePopup({ type: 'fb_error', error: fbError });
+  if (!code || !state) return closePopup({ type: 'fb_error', error: 'missing_code' });
+
+  try {
+    const jwt = require('jsonwebtoken');
+    const { uid } = jwt.verify(state, process.env.JWT_SECRET);
+    const account = await store.getAccount(uid);
+    if (!account) return closePopup({ type: 'fb_error', error: 'account_not_found' });
+
+    const redirectUri = `${process.env.BACKEND_URL}/api/auth/facebook/callback`;
+    const creds = { appId: account.metaAppId, appSecret: account.metaAppSecret, redirectUri };
 
     const shortLived = await meta.exchangeCodeForToken({ code, ...creds });
     const longLived  = await meta.exchangeForLongLived({ shortToken: shortLived.access_token, ...creds });
@@ -121,33 +154,21 @@ router.post('/facebook/exchange', requireAuth, async (req, res, next) => {
     const wabaIds     = granular.find((s) => s.scope === 'whatsapp_business_management')?.target_ids || [];
     const businessIds = granular.find((s) => s.scope === 'business_management')?.target_ids || [];
 
-    await store.updateAccount(req.user.uid, {
+    await store.updateAccount(uid, {
       fbUserId: me.id,
       fbToken: userToken,
       tokenExpiresIn: longLived.expires_in,
       wabaIds,
       businessIds,
-      signupSession: signupSession || null,
     });
 
-    const businesses = [];
-    for (const bid of businessIds) {
-      try {
-        const owned  = await meta.listOwnedWabas(userToken, bid);
-        const shared = await meta.listSharedWabas(userToken, bid);
-        businesses.push({ id: bid, owned_wabas: owned, shared_wabas: shared });
-      } catch (_) {}
-    }
-
-    const wabas = [];
     for (const wid of wabaIds) {
       try {
         const phones = await meta.listPhoneNumbers(userToken, wid);
-        wabas.push({ id: wid, phones });
-        await store.upsertWaba({ id: wid, userId: req.user.uid, phones });
+        await store.upsertWaba({ id: wid, userId: uid, phones });
         for (const p of phones) {
           await store.upsertPhone({
-            id: p.id, wabaId: wid, userId: req.user.uid,
+            id: p.id, wabaId: wid, userId: uid,
             display_phone_number: p.display_phone_number,
             verified_name: p.verified_name,
             name_status: p.name_status,
@@ -158,8 +179,11 @@ router.post('/facebook/exchange', requireAuth, async (req, res, next) => {
       } catch (_) {}
     }
 
-    res.json({ user: { id: req.user.uid, name: me.name, email: me.email }, businesses, wabas });
-  } catch (err) { next(err); }
+    closePopup({ type: 'fb_connected' });
+  } catch (err) {
+    console.error('[fb/callback]', err.message, err.response?.data || '');
+    closePopup({ type: 'fb_error', error: err.response?.data?.error?.message || err.message });
+  }
 });
 
 /* ── Me ── */

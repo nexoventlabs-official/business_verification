@@ -25,43 +25,59 @@ export default function Register({ onAuthed }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 w-full max-w-md">
-        <div className="flex items-center gap-2 mb-2">
-          <MessageSquare className="text-emerald-500" size={22} />
-          <h1 className="text-xl font-semibold text-slate-800">Create your account</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
+            <MessageSquare className="text-white" size={20} />
+          </div>
+          <span className="text-white text-xl font-bold">BSP Console</span>
         </div>
-        <p className="text-sm text-slate-500 mb-7">Connect your WhatsApp Business via Meta Embedded Signup.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-            <input className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required autoFocus />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input type="email" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="you@company.com" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <input type="password" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="Min 6 characters" required />
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h1 className="text-xl font-bold text-slate-800 mb-1">Create your account</h1>
+          <p className="text-sm text-slate-500 mb-6">Set up your WhatsApp BSP in 3 simple steps.</p>
+
+          <div className="flex gap-2 mb-6">
+            {['Account', 'Meta App', 'Connect WA'].map((s, i) => (
+              <div key={s} className={`flex-1 text-center text-xs py-1 rounded-full font-medium ${i === 0 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>{i+1}. {s}</div>
+            ))}
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+              <input className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-slate-50"
+                value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required autoFocus />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+              <input type="email" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-slate-50"
+                value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="you@company.com" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password <span className="text-slate-400 font-normal">(min 6 chars)</span></label>
+              <input type="password" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-slate-50"
+                value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="••••••••" required />
+            </div>
 
-          <button type="submit" disabled={busy}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 text-sm">
-            {busy ? <><Loader2 size={15} className="animate-spin" /> Creating account…</> : 'Create Account'}
-          </button>
-        </form>
+            {error && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2.5">
+                <span className="shrink-0">⚠</span> {error}
+              </div>
+            )}
 
-        <p className="mt-5 text-center text-sm text-slate-500">
-          Already have an account?{' '}
-          <Link to="/login" className="text-indigo-600 hover:underline font-medium">Sign in</Link>
-        </p>
+            <button type="submit" disabled={busy}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
+              {busy ? <><Loader2 size={15} className="animate-spin" /> Creating account…</> : 'Create Account →'}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-slate-500">
+            Already have an account?{' '}
+            <Link to="/login" className="text-green-600 hover:underline font-semibold">Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
