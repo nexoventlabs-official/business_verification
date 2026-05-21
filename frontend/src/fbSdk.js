@@ -27,11 +27,10 @@ export function loadFbSdk(appId, version = 'v23.0') {
   return sdkPromise;
 }
 
-export function launchEmbeddedSignup(configId, sessionInfoCb) {
+export function launchEmbeddedSignup(configId, sessionInfoCb, redirectUri) {
   return new Promise((resolve, reject) => {
     if (!window.FB) return reject(new Error('FB SDK not ready'));
 
-    // Listen for embedded-signup session events (business_id, waba_id, phone_number_id)
     const messageHandler = (event) => {
       if (!event.origin.includes('facebook.com')) return;
       try {
@@ -40,6 +39,14 @@ export function launchEmbeddedSignup(configId, sessionInfoCb) {
       } catch (_) {}
     };
     window.addEventListener('message', messageHandler);
+
+    const loginParams = {
+      config_id: configId,
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', version: 2 },
+    };
+    if (redirectUri) loginParams.redirect_uri = redirectUri;
 
     window.FB.login(
       (response) => {
@@ -50,12 +57,7 @@ export function launchEmbeddedSignup(configId, sessionInfoCb) {
           reject(new Error(response.status || 'login_cancelled'));
         }
       },
-      {
-        config_id: configId,
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', version: 2 },
-      }
+      loginParams,
     );
   });
 }
