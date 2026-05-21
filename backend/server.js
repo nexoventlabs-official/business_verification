@@ -35,6 +35,16 @@ app.use(
 );
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/api/debug-config', (_req, res) => res.json({
+  NODE_ENV: process.env.NODE_ENV,
+  FRONTEND_URL: process.env.FRONTEND_URL,
+  META_APP_ID: process.env.META_APP_ID ? '✓ set' : '✗ missing',
+  META_APP_SECRET: process.env.META_APP_SECRET ? '✓ set' : '✗ missing',
+  META_CONFIG_ID: process.env.META_CONFIG_ID ? '✓ set' : '✗ missing',
+  META_REDIRECT_URI: process.env.META_REDIRECT_URI || '✗ missing',
+  MONGODB_URI: process.env.MONGODB_URI ? '✓ set' : '✗ missing',
+  JWT_SECRET: process.env.JWT_SECRET ? '✓ set' : '✗ missing',
+}));
 
 app.use('/api/auth', authRouter);
 app.use('/api/whatsapp', whatsappRouter);
@@ -44,10 +54,11 @@ app.use('/api/admin', adminRouter);
 app.use('/api/tenants', (_req, res) => res.status(410).json({ error: 'tenant_setup_removed' }));
 
 app.use((err, _req, res, _next) => {
-  console.error('[error]', err);
-  res.status(err.status || 500).json({
+  const metaError = err.response?.data;
+  console.error('[error]', err.message, metaError || '');
+  res.status(err.response?.status || err.status || 500).json({
     error: err.message || 'Internal Server Error',
-    details: err.response?.data || undefined,
+    meta: metaError || undefined,
   });
 });
 

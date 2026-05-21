@@ -36,8 +36,9 @@ router.post('/facebook/exchange', async (req, res, next) => {
       appSecret: process.env.META_APP_SECRET,
       redirectUri: process.env.META_REDIRECT_URI,
     };
-    if (!creds.appId || !creds.appSecret) {
-      return res.status(500).json({ error: 'BSP Meta credentials not configured in .env' });
+    const missing = ['appId','appSecret','redirectUri'].filter((k) => !creds[k]);
+    if (missing.length) {
+      return res.status(500).json({ error: `Missing env vars: ${missing.map(k => ({ appId:'META_APP_ID', appSecret:'META_APP_SECRET', redirectUri:'META_REDIRECT_URI' })[k]).join(', ')}` });
     }
 
     const shortLived = await meta.exchangeCodeForToken({ code, ...creds });
