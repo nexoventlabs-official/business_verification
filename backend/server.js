@@ -35,6 +35,24 @@ app.use(
 );
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+app.post('/api/debug-exchange', require('./src/middleware/auth').requireAuth, async (req, res) => {
+  const store = require('./src/db/store');
+  const account = await store.getAccount(req.user.uid);
+  if (!account) return res.status(404).json({ error: 'account_not_found' });
+  const { redirectUri } = req.body;
+  res.json({
+    hasMetaAppId: !!account.metaAppId,
+    hasMetaAppSecret: !!account.metaAppSecret,
+    hasMetaConfigId: !!account.metaConfigId,
+    metaAppId: account.metaAppId || null,
+    metaConfigId: account.metaConfigId || null,
+    graphVersion: account.graphVersion,
+    redirectUriReceived: redirectUri || null,
+    exchangeUrl: `https://graph.facebook.com/${account.graphVersion || 'v23.0'}/oauth/access_token`,
+    note: 'redirect_uri in exchange must EXACTLY match what FB.login used and what is in Meta Valid OAuth Redirect URIs',
+  });
+});
 app.get('/api/debug-config', (_req, res) => res.json({
   NODE_ENV: process.env.NODE_ENV,
   FRONTEND_URL: process.env.FRONTEND_URL,

@@ -36,7 +36,10 @@ export default function ConnectFacebook({ onAuthed }) {
       onAuthed?.(data.user);
       nav('/portfolio');
     } catch (e) {
-      setError(e?.response?.data?.error || e.message);
+      const metaMsg = e?.response?.data?.meta?.error?.message;
+      const topMsg  = e?.response?.data?.error || e.message;
+      setError(metaMsg || topMsg);
+      console.error('[exchange error]', e?.response?.data || e.message);
     } finally { setBusy(false); }
   }
 
