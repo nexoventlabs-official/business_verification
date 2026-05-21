@@ -46,19 +46,25 @@ export default function Portfolio() {
 
   async function handleAddAccount() {
     setAddBusy(true); setAddMsg('');
+
+    // Must open popup SYNCHRONOUSLY inside the click handler — browsers block window.open() after await
+    const w = 620, h = 700;
+    const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+    const popup = window.open('about:blank', 'fb_add_account',
+      `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+    if (!popup) { setAddBusy(false); setAddMsg('Popup blocked — please allow popups and try again.'); return; }
+    popupRef.current = popup;
+
     try {
-      // Revoke existing FB connection so Meta shows fresh Embedded Signup (not Reconnect dialog)
+      // Revoke existing connection so Meta shows fresh Embedded Signup (not Reconnect dialog)
       try { await api.delete('/api/auth/facebook/disconnect'); } catch (_) {}
       const { data: d } = await api.get('/api/auth/facebook/start');
-      const w = 620, h = 700;
-      const left = Math.round(window.screenX + (window.outerWidth - w) / 2);
-      const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
-      const popup = window.open(d.authUrl, 'fb_add_account',
-        `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`);
-      if (!popup) { setAddBusy(false); setAddMsg('Popup blocked — please allow popups and try again.'); return; }
-      popupRef.current = popup;
+      // Navigate the already-open popup to the real URL
+      popup.location.href = d.authUrl;
       const t = setInterval(() => { if (popup.closed) { clearInterval(t); setAddBusy(false); } }, 500);
     } catch (e) {
+      popup.close();
       setAddBusy(false);
       setAddMsg(e?.response?.data?.message || e.message);
     }
