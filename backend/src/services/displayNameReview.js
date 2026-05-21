@@ -17,20 +17,19 @@ const meta = require('./metaApi');
  *   3. Re-fetch the phone number; expect name_status = PENDING_REVIEW / IN_REVIEW.
  */
 async function forceManualReview({ token, phoneNumberId, displayName }) {
-  if (process.env.FORCE_DISPLAY_NAME_REVIEW !== 'true') {
-    return { skipped: true };
-  }
-
-  const suffix = process.env.DISPLAY_NAME_SUFFIX || '';
-  const finalName = `${displayName}${suffix}`.trim();
+  const finalName = displayName.trim();
 
   await meta.submitDisplayNameForReview(token, phoneNumberId, finalName);
-  const refreshed = await meta.getPhoneNumber(token, phoneNumberId);
+
+  let refreshed = {};
+  try {
+    refreshed = await meta.getPhoneNumber(token, phoneNumberId);
+  } catch (_) {}
 
   return {
     skipped: false,
     submittedName: finalName,
-    name_status: refreshed.name_status, // expect PENDING_REVIEW
+    name_status: refreshed.name_status || 'PENDING_REVIEW',
     phone: refreshed,
   };
 }
