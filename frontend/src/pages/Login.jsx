@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Loader2 } from 'lucide-react';
-import { api } from '../api.js';
+import { api, markLoggedIn } from '../api.js';
 
 export default function Login({ onAuthed }) {
   const nav = useNavigate();
@@ -14,6 +14,7 @@ export default function Login({ onAuthed }) {
     e.preventDefault(); setError(''); setBusy(true);
     try {
       const { data } = await api.post('/api/auth/login', { email, password });
+      markLoggedIn();
       onAuthed(data.user);
       if (!data.user.hasMeta) nav('/setup');
       else if (!data.user.fbConnected) nav('/connect');

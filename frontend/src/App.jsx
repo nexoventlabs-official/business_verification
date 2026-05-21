@@ -11,16 +11,17 @@ import Portfolio from './pages/Portfolio.jsx';
 import BusinessVerification from './pages/BusinessVerification.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
-import { api } from './api.js';
+import { api, markLoggedIn, markLoggedOut, hasSessionHint } from './api.js';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!hasSessionHint()) { setLoading(false); return; }
     api.get('/api/auth/me')
       .then((r) => setUser(r.data))
-      .catch(() => setUser(null))
+      .catch(() => { markLoggedOut(); setUser(null); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -68,7 +69,7 @@ function Header({ user, onLogout }) {
           <div className="flex items-center gap-3 text-sm">
             <span className="text-slate-600">{user.name}</span>
             <button className="text-slate-500 hover:text-slate-800"
-              onClick={async () => { await api.post('/api/auth/logout'); onLogout(); nav('/login'); }}>
+              onClick={async () => { await api.post('/api/auth/logout'); markLoggedOut(); onLogout(); nav('/login'); }}>
               Logout
             </button>
           </div>

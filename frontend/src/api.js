@@ -7,3 +7,7 @@ export const api = axios.create({
     'ngrok-skip-browser-warning': '1',
   },
 });
+
+export function markLoggedIn()  { localStorage.setItem('bsp_session', '1'); }
+export function markLoggedOut() { localStorage.removeItem('bsp_session'); }
+export function hasSessionHint() { return !!localStorage.getItem('bsp_session'); }

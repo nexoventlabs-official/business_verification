@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Loader2 } from 'lucide-react';
-import { api } from '../api.js';
+import { api, markLoggedIn } from '../api.js';
 
 export default function Register({ onAuthed }) {
   const nav = useNavigate();
@@ -15,6 +15,7 @@ export default function Register({ onAuthed }) {
     e.preventDefault(); setError(''); setBusy(true);
     try {
       const { data } = await api.post('/api/auth/register', form);
+      markLoggedIn();
       onAuthed(data.user);
       nav('/setup');
     } catch (err) {
