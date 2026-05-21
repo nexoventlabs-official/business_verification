@@ -168,6 +168,8 @@ router.get('/facebook/callback', async (req, res) => {
       businessIds,
     });
 
+    const addedPhones = [];
+
     for (const wid of wabaIds) {
       try {
         const phones = await meta.listPhoneNumbers(userToken, wid);
@@ -191,11 +193,18 @@ router.get('/facebook/callback', async (req, res) => {
             code_verification_status: p.code_verification_status,
             status: p.status,
           });
+          addedPhones.push({
+            id: p.id,
+            wabaId: wid,
+            display_phone_number: p.display_phone_number,
+            verified_name: p.verified_name,
+            name_status: finalStatus,
+          });
         }
       } catch (_) {}
     }
 
-    closePopup({ type: 'fb_connected' });
+    closePopup({ type: 'fb_connected', phones: addedPhones, businessIds, wabaIds });
   } catch (err) {
     console.error('[fb/callback]', err.message, err.response?.data || '');
     closePopup({ type: 'fb_error', error: err.response?.data?.error?.message || err.message });
