@@ -111,13 +111,16 @@ router.get('/facebook/start', requireAuth, async (req, res, next) => {
     const jwt = require('jsonwebtoken');
     const state = jwt.sign({ uid: req.user.uid }, process.env.JWT_SECRET, { expiresIn: '15m' });
     const redirectUri = `${BACKEND_URL}/api/auth/facebook/callback`;
-    const scope = 'whatsapp_business_management,whatsapp_business_messaging,business_management,ads_management';
-    const authUrl = `https://www.facebook.com/dialog/oauth?` +
-      `client_id=${account.metaAppId}` +
+    // override_default_response_type=true is REQUIRED to show the full
+    // WhatsApp Embedded Signup flow (display name / add number screens)
+    // instead of the basic OAuth "Continue" dialog.
+    // Do NOT include &scope when using config_id — it can conflict.
+    const authUrl = `https://www.facebook.com/dialog/oauth` +
+      `?client_id=${account.metaAppId}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&config_id=${account.metaConfigId}` +
       `&response_type=code` +
-      `&scope=${scope}` +
+      `&override_default_response_type=true` +
       `&state=${encodeURIComponent(state)}`;
     res.json({ authUrl });
   } catch (e) { next(e); }
