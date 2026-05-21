@@ -110,16 +110,28 @@ router.get('/facebook/start', requireAuth, async (req, res, next) => {
     const jwt = require('jsonwebtoken');
     const state = jwt.sign({ uid: req.user.uid }, process.env.JWT_SECRET, { expiresIn: '15m' });
     const redirectUri = `${BACKEND_URL}/api/auth/facebook/callback`;
-    // override_default_response_type=true is REQUIRED to show the full
-    // WhatsApp Embedded Signup flow (display name / add number screens)
-    // instead of the basic OAuth "Continue" dialog.
-    // Do NOT include &scope when using config_id — it can conflict.
-    const authUrl = `https://www.facebook.com/dialog/oauth` +
+    // To trigger the FULL WhatsApp Embedded Signup multi-step flow
+    // (Select business → Enter info → Add phone → Display name) — same as
+    // what Meta's JS SDK sends — we MUST include:
+    //   - override_default_response_type=true
+    //   - extras with sessionInfoVersion=3 + setup={}
+    //   - display=popup
+    //   - auth_type=rerequest (forces re-prompt instead of silent re-auth)
+    const extras = encodeURIComponent(JSON.stringify({
+      setup: {},
+      featureType: '',
+      sessionInfoVersion: '3',
+    }));
+    const graphVersion = account.graphVersion || 'v23.0';
+    const authUrl = `https://www.facebook.com/${graphVersion}/dialog/oauth` +
       `?client_id=${account.metaAppId}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&config_id=${account.metaConfigId}` +
       `&response_type=code` +
       `&override_default_response_type=true` +
+      `&display=popup` +
+      `&auth_type=rerequest` +
+      `&extras=${extras}` +
       `&state=${encodeURIComponent(state)}`;
     res.json({ authUrl });
   } catch (e) { next(e); }
