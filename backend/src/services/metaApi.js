@@ -49,7 +49,7 @@ async function getMe(token) {
 
 async function listBusinesses(token) {
   const { data } = await client(token).get('/me/businesses', {
-    params: { fields: 'id,name,verification_status,primary_page' },
+    params: { fields: 'id,name,verification_status' },
   });
   return data.data || [];
 }

@@ -26,18 +26,27 @@ router.get('/portfolio', requireAuth, async (req, res, next) => {
     if (!u) return res.status(404).json({ error: 'user_not_found' });
     const token = await userToken(req.user.uid);
 
+    // Fetch all businesses the user manages — more reliable than per-ID calls
+    let allBizList = [];
+    try { allBizList = await meta.listBusinesses(token); } catch (_) {}
+    const bizMap = Object.fromEntries(allBizList.map((b) => [b.id, b]));
+
     const businesses = [];
     for (const bid of u.businessIds || []) {
       try {
-        const [info, owned, shared] = await Promise.allSettled([
-          meta.getBusinessInfo(token, bid),
+        // Try the /me/businesses list first, fall back to direct GET /{bid}
+        let info = bizMap[bid] || null;
+        if (!info) {
+          try { info = await meta.getBusinessInfo(token, bid); } catch (_) {}
+        }
+        const [owned, shared] = await Promise.allSettled([
           meta.listOwnedWabas(token, bid),
           meta.listSharedWabas(token, bid),
         ]);
         businesses.push({
           id: bid,
-          name: info.value?.name,
-          verification_status: info.value?.verification_status,
+          name: info?.name,
+          verification_status: info?.verification_status,
           owned_wabas: owned.value || [],
           shared_wabas: shared.value || [],
         });
