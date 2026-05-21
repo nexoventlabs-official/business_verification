@@ -26,12 +26,11 @@ export default function ConnectFacebook({ onAuthed }) {
   async function handleConnect() {
     setError(''); setBusy(true);
     try {
-      const redirectUri = window.location.origin;
-      const { code } = await launchEmbeddedSignup(config.configId, (sess) => setSignupSession(sess), redirectUri);
+      const { code } = await launchEmbeddedSignup(config.configId, (sess) => setSignupSession(sess));
       const { data } = await api.post('/api/auth/facebook/exchange', {
         code,
         signupSession,
-        redirectUri: window.location.origin,
+        redirectUri: '',
       });
       onAuthed?.(data.user);
       nav('/portfolio');

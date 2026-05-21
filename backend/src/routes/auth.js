@@ -108,8 +108,7 @@ router.post('/facebook/exchange', requireAuth, async (req, res, next) => {
     if (!account?.metaAppId || !account?.metaAppSecret) {
       return res.status(503).json({ error: 'not_configured', message: 'Complete tenant setup first.' });
     }
-    const creds = { appId: account.metaAppId, appSecret: account.metaAppSecret, redirectUri: redirectUri || '' };
-    if (!creds.redirectUri) return res.status(400).json({ error: 'redirectUri is required' });
+    const creds = { appId: account.metaAppId, appSecret: account.metaAppSecret, redirectUri: redirectUri ?? '' };
 
     const shortLived = await meta.exchangeCodeForToken({ code, ...creds });
     const longLived  = await meta.exchangeForLongLived({ shortToken: shortLived.access_token, ...creds });

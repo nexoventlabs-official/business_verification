@@ -13,14 +13,9 @@ function client(token) {
 
 /* ---------- OAuth (per-tenant credentials) ---------- */
 async function exchangeCodeForToken({ code, appId, appSecret, redirectUri }) {
-  const { data } = await axios.get(`${BASE}/oauth/access_token`, {
-    params: {
-      client_id: appId,
-      client_secret: appSecret,
-      redirect_uri: redirectUri,
-      code,
-    },
-  });
+  const params = { client_id: appId, client_secret: appSecret, code };
+  if (redirectUri) params.redirect_uri = redirectUri;
+  const { data } = await axios.get(`${BASE}/oauth/access_token`, { params });
   return data; // { access_token, token_type, expires_in }
 }
 
