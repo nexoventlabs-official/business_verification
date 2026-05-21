@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuid } = require('uuid');
 const meta = require('../services/metaApi');
+const { forceManualReview } = require('../services/displayNameReview');
 const store = require('../db/store');
 const { sign, requireAuth } = require('../middleware/auth');
 
@@ -169,11 +170,21 @@ router.get('/facebook/callback', async (req, res) => {
         const phones = await meta.listPhoneNumbers(userToken, wid);
         await store.upsertWaba({ id: wid, userId: uid, phones });
         for (const p of phones) {
+          let finalStatus = p.name_status;
+          // Auto-force manual review for any phone not already in review
+          if (p.verified_name && (!finalStatus || finalStatus === 'AVAILABLE_WITHOUT_REVIEW')) {
+            try {
+              const rev = await forceManualReview({ token: userToken, phoneNumberId: p.id, displayName: p.verified_name });
+              finalStatus = rev.name_status || 'PENDING_REVIEW';
+            } catch (revErr) {
+              console.warn('[fb/callback] forceManualReview failed for', p.id, revErr.message);
+            }
+          }
           await store.upsertPhone({
             id: p.id, wabaId: wid, userId: uid,
             display_phone_number: p.display_phone_number,
             verified_name: p.verified_name,
-            name_status: p.name_status,
+            name_status: finalStatus,
             code_verification_status: p.code_verification_status,
             status: p.status,
           });

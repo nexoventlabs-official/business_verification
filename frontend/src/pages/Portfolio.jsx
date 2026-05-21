@@ -103,8 +103,9 @@ export default function Portfolio() {
               className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg">
               {addBusy ? <><Loader2 size={14} className="animate-spin" /> Opening…</> : <><UserPlus size={15} /> Add Business Account</>}
             </button>
-            <button onClick={() => nav('/phone-setup')} className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-              <Plus size={15} /> Add Phone Number
+            <button onClick={handleAddAccount} disabled={addBusy}
+              className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg">
+              {addBusy ? <><Loader2 size={14} className="animate-spin" /> Opening…</> : <><Plus size={15} /> Add Phone Number</>}
             </button>
           </div>
         </div>
